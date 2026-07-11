@@ -32,7 +32,7 @@ namespace bnk
         cout << " PinCode        :  " << Client.PinCode << "\n";
         cout << " Name           :  " << Client.Name << "\n";
         cout << " Phone          :  " << Client.Phone << "\n";
-        cout << " Balance        : $" << fixed << setprecision(2) << Client.Balance << "\n";
+        cout << " Balance        :  $" << fixed << setprecision(2) << Client.Balance << "\n";
     }
 
     bool CheckIfClientExists(const vector<sClient> &vClients, string AccountNumber)
@@ -172,7 +172,7 @@ namespace bnk
         } while (toupper(AddMore) == 'Y');
     }
 
-    vector<sClient> LoadCleintsDataFromFile(string FileName)
+    vector<sClient> LoadClientsDataFromFile(string FileName)
     {
         vector<sClient> vClients;
         fstream MyFile;
@@ -193,7 +193,7 @@ namespace bnk
         return vClients;
     }
 
-    void SaveCleintsDataToFile(string FileName, vector<sClient> vClients)
+    void SaveClientsDataToFile(string FileName, const vector<sClient> &vClients)
     {
         fstream MyFile;
         MyFile.open(FileName, ios::out);
@@ -229,26 +229,58 @@ namespace bnk
 
     void PrintAllClientsData()
     {
-        vector<sClient> vClients = LoadCleintsDataFromFile(ClientFile);
+        vector<sClient> vClients = LoadClientsDataFromFile(ClientFile);
 
-        cout << "\n\t\t\t\t\tCLIENT DATABASE LIST (" << vClients.size() << ") Client(s).";
-        cout << "\n=========================================================================================\n" << endl;
+        cout << "\n\t\t\tCLIENT DATABASE LIST (" << vClients.size() << ") Client(s).";
+        cout << "\n=========================================================================================\n"
+             << endl;
         cout << "| " << left << setw(16) << "Account Number";
         cout << "| " << left << setw(12) << "Pin Code";
         cout << "| " << left << setw(26) << "Client Name";
         cout << "| " << left << setw(16) << "Phone";
         cout << "| " << left << setw(13) << "Balance";
-        cout << "\n-----------------------------------------------------------------------------------------\n" << endl;
+        cout << "\n-----------------------------------------------------------------------------------------\n"
+             << endl;
 
         for (const sClient &Client : vClients)
         {
             PrintClientRecord(Client);
             cout << endl;
         }
-        cout << "\n=========================================================================================\n" << endl;
+        cout << "\n=========================================================================================\n"
+             << endl;
     }
 
-    bool FindClientByAccNum(string AccNum, vector<sClient> vClients, sClient &Client)
+    void PrintClientBalance(sClient Client)
+    {
+        cout << "| " << setw(20) << left << Client.AccountNumber;
+        cout << "| " << setw(46) << left << Client.Name;
+        cout << "| $" << setw(16) << left << fixed << setprecision(2) << Client.Balance;
+    }
+
+    void PrintAllClientsBalance()
+    {
+        vector<sClient> vClients = LoadClientsDataFromFile(ClientFile);
+
+        cout << "\n\t\t\tCLIENT BALANCE LIST (" << vClients.size() << ") Client(s).";
+        cout << "\n=========================================================================================\n"
+             << endl;
+        cout << "| " << left << setw(20) << "Account Number";
+        cout << "| " << left << setw(46) << "Client Name";
+        cout << "| " << left << setw(17) << "Balance";
+        cout << "\n-----------------------------------------------------------------------------------------\n"
+             << endl;
+
+        for (const sClient &Client : vClients)
+        {
+            PrintClientBalance(Client);
+            cout << endl;
+        }
+        cout << "\n=========================================================================================\n"
+             << endl;
+    }
+
+    bool FindClientByAccountNumber(string AccNum, vector<sClient> &vClients, sClient &Client)
     {
         for (sClient &C : vClients)
         {
@@ -261,14 +293,14 @@ namespace bnk
         return false;
     }
 
-    void FindAccount(vector<sClient> vClients)
+    void FindAccount(vector<sClient> &vClients)
     {
         PrintHeader("FIND CLIENT");
         cout << " -> Enter the account number you want to find: ";
         string AccNum;
         cin >> AccNum;
         sClient Client;
-        if (FindClientByAccNum(AccNum, vClients, Client))
+        if (FindClientByAccountNumber(AccNum, vClients, Client))
         {
             cout << "\n[-] Target client record found:\n";
             PrintClientCard(Client);
@@ -295,33 +327,30 @@ namespace bnk
     {
         PrintHeader("DELETE CLIENT ACCOUNT");
         cout << " -> Enter the account number you want to delete: ";
-        string AccNum;
-        cin >> AccNum;
+        string AccountNumber;
+        cin >> AccountNumber;
         sClient Client;
 
-        char DeleteChoice;
-        if (FindClientByAccNum(AccNum, vClients, Client))
+        char Answer = 'n';
+        if (!FindClientByAccountNumber(AccountNumber, vClients, Client))
         {
+            cout << "\n [!] Client with Account Number (" << AccountNumber << ") is not found!\n";
+            return;
+        }
+
             cout << "\n[✓] Target client record found:\n";
             PrintClientCard(Client);
             cout << "\n -> Are you sure you want to delete this client? (Y/N): ";
-            cin >> DeleteChoice;
-            if (toupper(DeleteChoice) == 'Y')
-            {
-                MarkClientForDelete(AccNum, vClients);
-                SaveCleintsDataToFile(ClientFile, vClients);
-                vClients = LoadCleintsDataFromFile(ClientFile);
-                cout << "\n[-] Client with Account Number (" << AccNum << ") has been successfully deleted.\n";
-            }
-            else
+            cin >> Answer;
+            if (Answer != 'y' && Answer != 'Y')
             {
                 cout << "\n[-] Delete operation canceled.\n";
+                return;
             }
-        }
-        else
-        {
-            cout << "\n[!] Client with Account Number (" << AccNum << ") was not found.\n";
-        }
+            MarkClientForDelete(AccountNumber, vClients);
+            SaveClientsDataToFile(ClientFile, vClients);
+            vClients = LoadClientsDataFromFile(ClientFile);
+            cout << "\n[-] Client with Account Number (" << AccountNumber << ") has been successfully deleted.\n";
     }
 
     void UpdateAccount(vector<sClient> &vClients)
@@ -332,34 +361,128 @@ namespace bnk
         cin >> AccountNumber;
         sClient Client;
         char Answer = 'n';
-        if (FindClientByAccNum(AccountNumber, vClients, Client))
+        if (!FindClientByAccountNumber(AccountNumber, vClients, Client))
         {
-            cout << "\n[-] Current client record:\n";
-            PrintClientCard(Client);
-            cout << "\n -> Are you sure you want update this client? (Y/N): ";
-            cin >> Answer;
-            if (Answer == 'y' || Answer == 'Y')
+            cout << "\n [!] Client with Account Number (" << AccountNumber << ") is not found!\n";
+            return;
+        }
+        cout << "\n[-] Current client record:\n";
+        PrintClientCard(Client);
+        cout << "\n -> Are you sure you want update this client? (Y/N): ";
+        cin >> Answer;
+        if (Answer != 'y' && Answer != 'Y')
+        {
+            cout << "\n[-] Update operation canceled.\n";
+            return;
+        }
+        for (sClient &C : vClients)
+        {
+            if (C.AccountNumber == AccountNumber)
             {
-                for (sClient &C : vClients)
+                C = UpdateRecord(AccountNumber);
+                break;
+            }
+        }
+        SaveClientsDataToFile(ClientFile, vClients);
+        cout << "\n[✓] Client Updated Successfully.\n";
+    }
+
+    void Deposit(vector<sClient> &vClients)
+    {
+
+        PrintHeader("DEPOSIT");
+        string AccountNumber;
+        cout << " -> pls enter account number : ";
+        cin >> AccountNumber;
+        sClient Client;
+        if (!FindClientByAccountNumber(AccountNumber, vClients, Client))
+        {
+            cout << "\n [!] Client with Account Number (" << AccountNumber << ") is not found!\n";
+            return;
+        }
+
+        cout << "\n[-] Current client record:\n";
+        PrintClientCard(Client);
+        char Answer = 'n';
+        cout << "\n -> Are you sure you want update this client? (Y/N): ";
+        cin >> Answer;
+        if (Answer != 'y' && Answer != 'Y')
+        {
+            cout << "\n[-] Operation canceled.\n";
+            return;
+        }
+        double Amount;
+        cout << " -> pls enter amount to deposite : ";
+        cin >> Amount;
+        for (sClient &c : vClients)
+        {
+            if (c.AccountNumber == AccountNumber)
+            {
+                c.Balance += Amount;
+                SaveClientsDataToFile(ClientFile, vClients);
+                cout << "\n\n [+] Deposit Successful. New Balance: " << c.Balance << endl;
+                break;
+            }
+        }
+    }
+
+    void Withdraw(vector<sClient> &vClients)
+    {
+        PrintHeader("WITHDRAW");
+        string AccountNumber;
+        cout << " -> pls enter account number : ";
+        cin >> AccountNumber;
+        sClient Client;
+        if (!FindClientByAccountNumber(AccountNumber, vClients, Client))
+        {
+            cout << "\n [!] Client with Account Number (" << AccountNumber << ") is not found!\n";
+            return;
+        }
+        cout << "\n[-] Current client record:\n";
+        PrintClientCard(Client);
+        char Answer = 'n';
+        cout << "\n -> Are you sure you want update this client? (Y/N): ";
+        cin >> Answer;
+        if (Answer != 'y' && Answer != 'Y')
+        {
+            cout << "\n[-] Operation canceled.\n";
+            return;
+        }
+        double Amount;
+        cout << " -> pls enter amount to withdraw : ";
+        cin >> Amount;
+
+        for (sClient &c : vClients)
+        {
+            if (c.AccountNumber == AccountNumber)
+            {
+                if (Amount > c.Balance)
                 {
-                    if (C.AccountNumber == AccountNumber)
-                    {
-                        C = UpdateRecord(AccountNumber);
-                        break;
-                    }
+                    cout << "\n [!] Insufficient balance. Current Balance: " << c.Balance << endl;
+                    return;
                 }
-                SaveCleintsDataToFile(ClientFile, vClients);
-                cout << "\n[✓] Client Updated Successfully.\n";
-            }
-            else
-            {
-                cout << "\n[-] Update operation canceled.\n";
+                c.Balance -= Amount;
+
+                SaveClientsDataToFile(ClientFile, vClients);
+                cout << "\n\n [-] Withdrawal Successful. New Balance: " << c.Balance << endl;
+                break;
             }
         }
-        else
+    }
+
+    void TotalBalance(vector<sClient> &vClients)
+    {
+        cout << "\n=========================================================================================\n";
+        cout << "\n\t\t\t         TOTAL BALANCES  " << endl;
+        cout << "\n=========================================================================================\n";
+        PrintAllClientsBalance();
+        double Total = 0.0;
+        for (const sClient &c : vClients)
         {
-            cout << "\n[!] Client with Account Number (" << AccountNumber << ") was not found.\n";
+            Total += c.Balance;
         }
+        cout << "| " << left << setw(68) << "Total Balance of All Clients :";
+        cout << "| " << Total << endl;
     }
 
     void MainMenu()
@@ -372,7 +495,20 @@ namespace bnk
         cout << "  [3] Update Client Info\n";
         cout << "  [4] Delete Client Account\n";
         cout << "  [5] Find Client Profile\n";
-        cout << "  [6] Exit System\n";
+        cout << "  [6] Transaction Menu\n";
+        cout << "  [7] Exit System\n";
+        cout << "==================================================\n";
+    }
+
+    void TransactionMenu()
+    {
+        cout << "\n==================================================\n";
+        cout << "                           TRANSATION MENU                          \n";
+        cout << "==================================================\n";
+        cout << "  [1] Deposit\n";
+        cout << "  [2] Withdraw\n";
+        cout << "  [3] Total Balance\n";
+        cout << "  [4] Back To Main Menu\n";
         cout << "==================================================\n";
     }
 
@@ -396,6 +532,37 @@ namespace bnk
         }
     }
 
+    void TransactionScreen(vector<sClient> &vClients)
+    {
+        short Choice;
+        do
+        {
+            system("cls");
+            TransactionMenu();
+            Choice = ReadNumber(1, 4);
+            system("cls");
+            switch (Choice)
+            {
+            case 1:
+                Deposit(vClients);
+                break;
+            case 2:
+                Withdraw(vClients);
+                break;
+            case 3:
+                TotalBalance(vClients);
+                break;
+            case 4:
+                break;
+            }
+            if (Choice != 4)
+            {
+                cout << "\n\nPress any key to go back to the Transaction Menu...";
+                system("pause>0");
+            }
+        } while (Choice != 4);
+    }
+
     void BankSystem(vector<sClient> &vClients)
     {
         short Choice;
@@ -403,7 +570,7 @@ namespace bnk
         {
             system("cls");
             MainMenu();
-            Choice = ReadNumber(1, 6);
+            Choice = ReadNumber(1, 7);
             system("cls");
             switch (Choice)
             {
@@ -423,15 +590,18 @@ namespace bnk
                 FindAccount(vClients);
                 break;
             case 6:
+                TransactionScreen(vClients);
+                break;
+            case 7:
                 PrintHeader("SYSTEM TERMINATED");
                 cout << " Thank you for using our banking service. Goodbye!\n\n";
                 break;
             }
-            if (Choice != 6)
+            if (Choice < 6)
             {
-                cout << "\n\n Press any key to go back to the main menu...";
+                cout << "\n\n Press any key to go back to the Main Menu...";
                 system("pause>0");
             }
-        } while (Choice != 6);
+        } while (Choice != 7);
     }
 }

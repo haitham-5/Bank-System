@@ -5,7 +5,7 @@ using namespace bnk;
 int main()
 {
     vector <sClient> vClients;
-    vClients=LoadCleintsDataFromFile(ClientFile);
+    vClients=LoadClientsDataFromFile(ClientFile);
 
     BankSystem(vClients);
 }
