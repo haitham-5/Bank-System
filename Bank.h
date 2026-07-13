@@ -1,3 +1,6 @@
+#pragma once
+
+#include <functional>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -9,6 +12,8 @@ using namespace std;
 
 namespace bnk
 {
+
+    void LogIn();
     struct sClient
     {
         string AccountNumber;
@@ -19,11 +24,426 @@ namespace bnk
         bool MarkedForDelete = false;
     };
 
+    int ReadNumber(int Min = -1, int Max = 100000000)
+    {
+        int Number;
+        while (true)
+        {
+            cout << " -> Choose option [" << Min << "-" << Max << "]: ";
+            if (cin >> Number)
+            {
+                if (Number >= Min && Number <= Max)
+                {
+                    return Number;
+                }
+            }
+
+            cout << " [!] Invalid input. Please choice out of the range.\n";
+            cin.clear();
+            cin.ignore(10000, '\n');
+        }
+    }
+
     void PrintHeader(string Title)
     {
         cout << "\n==================================================\n";
         cout << "\t\t" << Title << "\n";
         cout << "==================================================\n";
+    }
+    vector<string> SplitString(string S1, string Delim)
+    {
+        vector<string> vString;
+        size_t pos = 0;
+        string sWord;
+        while ((pos = S1.find(Delim)) != std::string::npos)
+        {
+            sWord = S1.substr(0, pos);
+            if (sWord != "")
+                vString.push_back(sWord);
+            S1.erase(0, pos + Delim.length());
+        }
+        if (S1 != "")
+            vString.push_back(S1);
+        return vString;
+    }
+
+    struct sUser
+    {
+        string Name;
+        string Password;
+        int Permissions = 0;
+        bool MarkedForDelete = false;
+    };
+
+    sUser Current;
+
+    bool CheckIfUserExists(const vector<sUser> &vUsers, string Name)
+    {
+        for (const sUser &User : vUsers)
+        {
+            if (User.Name == Name)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    string HashPassword(const string &password)
+    {
+        size_t hashValue = hash<string>{}(password);
+        return to_string(hashValue);
+    }
+
+    sUser ReadUserRecord(vector<sUser> &vUsers)
+    {
+        sUser User;
+        cout << " -> Please enter UserName: ";
+        getline(cin >> ws, User.Name);
+        while (CheckIfUserExists(vUsers, User.Name))
+        {
+            cout << " [!] UserName already exists!\n";
+            cout << " -> Please enter UserName: ";
+            getline(cin >> ws, User.Name);
+        }
+
+        cout << " -> Please Enter User Password : ";
+        getline(cin >> ws, User.Password);
+        User.Password = HashPassword(User.Password);
+        cout << " -> do you want to give access to the whole System Y/N: ";
+        char answer = 'n';
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+        {
+            User.Permissions = -1;
+            return User;
+        }
+        cout << " -> do you want to give access to See Client List : ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 1;
+        cout << " -> do you want to give access to Add New Clients : ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 2;
+        cout << " -> do you want to give access to Update Clients : ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 4;
+        cout << " -> do you want to give access to Delete Clients : ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 8;
+        cout << " -> do you want to give access to Find Clients: ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 16;
+        cout << " -> do you want to give access to The Transaction Screen: ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 32;
+        cout << " -> do you want to give access to Manage Users : ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 64;
+        cin.ignore();
+        return User;
+    }
+
+    sUser UpdateUserRecord(string Name)
+    {
+        sUser User;
+        User.Permissions = 0;
+        User.Name = Name;
+        cout << " -> Please Enter User Password : ";
+        getline(cin >> ws, User.Password);
+        User.Password = HashPassword(User.Password);
+        cout << " -> do you want to give access to the whole System Y/N: ";
+        char answer = 'n';
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+        {
+            User.Permissions = -1;
+            return User;
+        }
+        cout << " -> do you want to give access to See Client List : ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 1;
+        cout << " -> do you want to give access to Add New Clients : ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 2;
+        cout << " -> do you want to give access to Update Clients : ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 4;
+        cout << " -> do you want to give access to Delete Clients : ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 8;
+        cout << " -> do you want to give access to Find Clients: ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 16;
+        cout << " -> do you want to give access to The Transaction Screen: ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 32;
+        cout << " -> do you want to give access to Manage Users : ";
+        cin >> answer;
+        if (answer == 'y' || answer == 'Y')
+            User.Permissions += 64;
+        cin.ignore();
+        return User;
+    }
+
+    sUser UserLineToRecord(string S, string Delim)
+    {
+        vector<string> vec = SplitString(S, Delim);
+        sUser U;
+        if (vec.size() >= 3)
+        {
+            U.Name = vec[0];
+            U.Password = (vec[1]);
+            U.Permissions = stoi(vec[2]);
+        }
+        return U;
+    }
+
+    string UserRecordToLine(sUser User, string Delim)
+    {
+        string S = "";
+        S += (User.Name) + Delim;
+        S += (User.Password) + Delim;
+        S += (to_string(User.Permissions));
+        return S;
+    }
+
+    const string UsersFile = "Users.txt";
+
+    void AddLineToFile(string FileName, string Line)
+    {
+        fstream File;
+        File.open(FileName, ios::out | ios::app);
+        if (File.is_open())
+        {
+            File << Line << endl;
+        }
+        File.close();
+    }
+
+    void AddUserToFile(vector<sUser> &vUsers)
+    {
+        sUser User = ReadUserRecord(vUsers);
+        vUsers.push_back(User);
+        AddLineToFile(UsersFile, UserRecordToLine(User, "#//#"));
+    }
+
+    void AddUsersToFile(vector<sUser> &vUsers)
+    {
+        char AddMore = 'Y';
+        do
+        {
+            system("cls");
+            PrintHeader("ADD NEW USER");
+            AddUserToFile(vUsers);
+            cout << "\n -> Do you want to add more Users? [Y/N]: ";
+            cin >> AddMore;
+        } while (toupper(AddMore) == 'Y');
+    }
+
+    vector<sUser> LoadUsersDataFromFile(string FileName)
+    {
+        vector<sUser> vUsers;
+        fstream MyFile;
+        MyFile.open(FileName, ios::in);
+        if (MyFile.is_open())
+        {
+            string Line;
+            while (getline(MyFile, Line))
+            {
+                if (!Line.empty())
+                {
+                    sUser User = UserLineToRecord(Line, "#//#");
+
+                    vUsers.push_back(User);
+                }
+            }
+            MyFile.close();
+        }
+        return vUsers;
+    }
+
+    void SaveUsersDataToFile(string FileName, const vector<sUser> &vUsers)
+    {
+        fstream MyFile;
+        MyFile.open(FileName, ios::out);
+        if (MyFile.is_open())
+        {
+            for (const sUser &User : vUsers)
+            {
+                if (!User.MarkedForDelete)
+                {
+                    string Line = UserRecordToLine(User, "#//#");
+                    MyFile << Line << endl;
+                }
+            }
+            MyFile.close();
+        }
+    }
+
+    void PrintUserCard(sUser User)
+    {
+        cout << "\n----------------------------------------\n";
+        cout << " UserName            :  " << User.Name << "\n";
+        cout << " UserPassword    :  " << User.Password << "\n";
+        cout << " Permissions         :  " << User.Permissions << "\n";
+        cout << "----------------------------------------\n";
+    }
+
+    void PrintUserRecord(sUser User)
+    {
+        cout << "| " << setw(36) << left << User.Name;
+        cout << "| " << setw(28) << left << "********";
+        cout << "| " << setw(22) << left << User.Permissions;
+    }
+
+    void ShowAllUsersData(vector<sUser> &vUsers)
+    {
+
+        cout << "\n\t\t\tUSER DATABASE LIST (" << vUsers.size() << ") USER(s).";
+        cout << "\n=========================================================================================\n"
+             << endl;
+        cout << "| " << setw(36) << left << "Name";
+        cout << "| " << setw(28) << left << "Password";
+        cout << "| " << setw(22) << left << "Permissions";
+        cout << "\n-----------------------------------------------------------------------------------------\n"
+             << endl;
+
+        for (const sUser &User : vUsers)
+        {
+            PrintUserRecord(User);
+            cout << endl;
+        }
+        cout << "\n=========================================================================================\n"
+             << endl;
+    }
+
+    bool FindUserByUserName(string Name, vector<sUser> &vUsers, sUser &User)
+    {
+        for (sUser &U : vUsers)
+        {
+            if (U.Name == Name)
+            {
+                User = U;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void FindUser(vector<sUser> &vUsers)
+    {
+        PrintHeader("FIND USER");
+        cout << " -> Enter the UserName you want to find: ";
+        string Name;
+        cin >> Name;
+        sUser User;
+        if (FindUserByUserName(Name, vUsers, User))
+        {
+            cout << "\n[-] Target User record found:\n";
+            PrintUserCard(User);
+        }
+        else
+        {
+            cout << "\n[!] User with UserName (" << Name << ") was not found.\n";
+        }
+    }
+
+    void MarkUserForDelete(string Name, vector<sUser> &vUsers)
+    {
+        for (sUser &U : vUsers)
+        {
+            if (U.Name == Name)
+            {
+                U.MarkedForDelete = true;
+                return;
+            }
+        }
+    }
+
+    void DeleteUser(vector<sUser> &vUsers)
+    {
+        PrintHeader("DELETE USER ACCOUNT");
+        cout << " -> Enter the UserName you want to delete: ";
+        string Name;
+        cin >> Name;
+        if (Name == "Admin")
+        {
+            cout << " [!] You Can't Delete The Admin !";
+            return;
+        }
+        sUser User;
+
+        char Answer = 'n';
+        if (!FindUserByUserName(Name, vUsers, User))
+        {
+            cout << "\n [!] User with UserName (" << Name << ") is not found!\n";
+            return;
+        }
+
+        cout << "\n[✓] Target User record found:\n";
+        PrintUserCard(User);
+        cout << "\n -> Are you sure you want to delete this User? (Y/N): ";
+        cin >> Answer;
+        if (Answer != 'y' && Answer != 'Y')
+        {
+            cout << "\n[-] Delete operation canceled.\n";
+            return;
+        }
+        MarkUserForDelete(Name, vUsers);
+        SaveUsersDataToFile(UsersFile, vUsers);
+        vUsers = LoadUsersDataFromFile(UsersFile);
+        cout << "\n[-] User with UserName (" << Name << ") has been successfully deleted.\n";
+        if (Name == Current.Name)
+        {
+            Current.Permissions = 0;
+        }
+    }
+
+    void UpdateUser(vector<sUser> &vUsers)
+    {
+        PrintHeader("UPDATE USER INFO");
+        string Name;
+        cout << " -> Enter the UserName you want to update: ";
+        cin >> Name;
+        sUser User;
+        char Answer = 'n';
+        if (!FindUserByUserName(Name, vUsers, User))
+        {
+            cout << "\n [!] User with Account Number (" << Name << ") is not found!\n";
+            return;
+        }
+        cout << "\n[-] Current User record:\n";
+        PrintUserCard(User);
+        cout << "\n -> Are you sure you want update this User? (Y/N): ";
+        cin >> Answer;
+        if (Answer != 'y' && Answer != 'Y')
+        {
+            cout << "\n[-] Update operation canceled.\n";
+            return;
+        }
+        for (sUser &U : vUsers)
+        {
+            if (U.Name == Name)
+            {
+                U = UpdateUserRecord(Name);
+                break;
+            }
+        }
+        SaveUsersDataToFile(UsersFile, vUsers);
+        cout << "\n[✓] User Updated Successfully.\n";
     }
 
     void PrintRecord(const sClient &Client)
@@ -65,7 +485,7 @@ namespace bnk
         cout << " -> Please enter phone: ";
         getline(cin, Client.Phone);
         cout << " -> Please enter balance: ";
-        cin >> Client.Balance;
+        Client.Balance = ReadNumber();
         return Client;
     }
 
@@ -80,25 +500,8 @@ namespace bnk
         cout << " -> Please enter new phone: ";
         getline(cin, Client.Phone);
         cout << " -> Please enter new balance: ";
-        cin >> Client.Balance;
+        Client.Balance = ReadNumber();
         return Client;
-    }
-
-    vector<string> SplitString(string S1, string Delim)
-    {
-        vector<string> vString;
-        size_t pos = 0;
-        string sWord;
-        while ((pos = S1.find(Delim)) != std::string::npos)
-        {
-            sWord = S1.substr(0, pos);
-            if (sWord != "")
-                vString.push_back(sWord);
-            S1.erase(0, pos + Delim.length());
-        }
-        if (S1 != "")
-            vString.push_back(S1);
-        return vString;
     }
 
     sClient LineToRecord(string S, string Delim)
@@ -138,25 +541,13 @@ namespace bnk
         return vec;
     }
 
-    const string ClientFile = "client.txt";
-    const string UsersFile = "users.txt";
-
-    void AddLineToFile(string ClientFile, string Line)
-    {
-        fstream File;
-        File.open(ClientFile, ios::out | ios::app);
-        if (File.is_open())
-        {
-            File << Line << endl;
-        }
-        File.close();
-    }
+    const string ClientsFile = "client.txt";
 
     void AddClientToFile(vector<sClient> &vClients)
     {
         sClient MyClient = ReadRecord(vClients);
         vClients.push_back(MyClient);
-        AddLineToFile(ClientFile, RecordToLine(MyClient, "#//#"));
+        AddLineToFile(ClientsFile, RecordToLine(MyClient, "#//#"));
     }
 
     void AddClientsToFile(vector<sClient> &vClients)
@@ -227,10 +618,8 @@ namespace bnk
         cout << "| $" << setw(12) << left << fixed << setprecision(2) << Client.Balance;
     }
 
-    void PrintAllClientsData()
+    void ShowAllClientsData(vector<sClient> &vClients)
     {
-        vector<sClient> vClients = LoadClientsDataFromFile(ClientFile);
-
         cout << "\n\t\t\tCLIENT DATABASE LIST (" << vClients.size() << ") Client(s).";
         cout << "\n=========================================================================================\n"
              << endl;
@@ -258,10 +647,8 @@ namespace bnk
         cout << "| $" << setw(16) << left << fixed << setprecision(2) << Client.Balance;
     }
 
-    void PrintAllClientsBalance()
+    void ShowAllClientsBalance(vector<sClient> vClients)
     {
-        vector<sClient> vClients = LoadClientsDataFromFile(ClientFile);
-
         cout << "\n\t\t\tCLIENT BALANCE LIST (" << vClients.size() << ") Client(s).";
         cout << "\n=========================================================================================\n"
              << endl;
@@ -323,7 +710,7 @@ namespace bnk
         }
     }
 
-    void DeleteAccount(vector<sClient> &vClients)
+    void DeleteClient(vector<sClient> &vClients)
     {
         PrintHeader("DELETE CLIENT ACCOUNT");
         cout << " -> Enter the account number you want to delete: ";
@@ -338,22 +725,22 @@ namespace bnk
             return;
         }
 
-            cout << "\n[✓] Target client record found:\n";
-            PrintClientCard(Client);
-            cout << "\n -> Are you sure you want to delete this client? (Y/N): ";
-            cin >> Answer;
-            if (Answer != 'y' && Answer != 'Y')
-            {
-                cout << "\n[-] Delete operation canceled.\n";
-                return;
-            }
-            MarkClientForDelete(AccountNumber, vClients);
-            SaveClientsDataToFile(ClientFile, vClients);
-            vClients = LoadClientsDataFromFile(ClientFile);
-            cout << "\n[-] Client with Account Number (" << AccountNumber << ") has been successfully deleted.\n";
+        cout << "\n[✓] Target client record found:\n";
+        PrintClientCard(Client);
+        cout << "\n -> Are you sure you want to delete this client? (Y/N): ";
+        cin >> Answer;
+        if (Answer != 'y' && Answer != 'Y')
+        {
+            cout << "\n[-] Delete operation canceled.\n";
+            return;
+        }
+        MarkClientForDelete(AccountNumber, vClients);
+        SaveClientsDataToFile(ClientsFile, vClients);
+        vClients = LoadClientsDataFromFile(ClientsFile);
+        cout << "\n[-] Client with Account Number (" << AccountNumber << ") has been successfully deleted.\n";
     }
 
-    void UpdateAccount(vector<sClient> &vClients)
+    void UpdateClient(vector<sClient> &vClients)
     {
         PrintHeader("UPDATE CLIENT INFO");
         string AccountNumber;
@@ -383,7 +770,7 @@ namespace bnk
                 break;
             }
         }
-        SaveClientsDataToFile(ClientFile, vClients);
+        SaveClientsDataToFile(ClientsFile, vClients);
         cout << "\n[✓] Client Updated Successfully.\n";
     }
 
@@ -419,7 +806,7 @@ namespace bnk
             if (c.AccountNumber == AccountNumber)
             {
                 c.Balance += Amount;
-                SaveClientsDataToFile(ClientFile, vClients);
+                SaveClientsDataToFile(ClientsFile, vClients);
                 cout << "\n\n [+] Deposit Successful. New Balance: " << c.Balance << endl;
                 break;
             }
@@ -463,7 +850,7 @@ namespace bnk
                 }
                 c.Balance -= Amount;
 
-                SaveClientsDataToFile(ClientFile, vClients);
+                SaveClientsDataToFile(ClientsFile, vClients);
                 cout << "\n\n [-] Withdrawal Successful. New Balance: " << c.Balance << endl;
                 break;
             }
@@ -475,7 +862,7 @@ namespace bnk
         cout << "\n=========================================================================================\n";
         cout << "\n\t\t\t         TOTAL BALANCES  " << endl;
         cout << "\n=========================================================================================\n";
-        PrintAllClientsBalance();
+        ShowAllClientsBalance(vClients);
         double Total = 0.0;
         for (const sClient &c : vClients)
         {
@@ -496,7 +883,21 @@ namespace bnk
         cout << "  [4] Delete Client Account\n";
         cout << "  [5] Find Client Profile\n";
         cout << "  [6] Transaction Menu\n";
-        cout << "  [7] Exit System\n";
+        cout << "  [7] Manage Users\n";
+        cout << "  [8] Log Out\n";
+        cout << "==================================================\n";
+    }
+    void UserMenu()
+    {
+        cout << "\n==================================================\n";
+        cout << "                         MANAGE USERS MENU                        \n";
+        cout << "==================================================\n";
+        cout << "  [1] Show All Users\n";
+        cout << "  [2] Add New User/s\n";
+        cout << "  [3] Update User Info\n";
+        cout << "  [4] Delete User Account\n";
+        cout << "  [5] Find User Profile\n";
+        cout << "  [6] Back To Main Menu\n";
         cout << "==================================================\n";
     }
 
@@ -510,26 +911,6 @@ namespace bnk
         cout << "  [3] Total Balance\n";
         cout << "  [4] Back To Main Menu\n";
         cout << "==================================================\n";
-    }
-
-    int ReadNumber(int Min, int Max)
-    {
-        int Number;
-        while (true)
-        {
-            cout << " -> Choose option [" << Min << "-" << Max << "]: ";
-            if (cin >> Number)
-            {
-                if (Number >= Min && Number <= Max)
-                {
-                    return Number;
-                }
-            }
-
-            cout << " [!] Invalid input. Please choice out of the range.\n";
-            cin.clear();
-            cin.ignore(10000, '\n');
-        }
     }
 
     void TransactionScreen(vector<sClient> &vClients)
@@ -562,46 +943,177 @@ namespace bnk
             }
         } while (Choice != 4);
     }
-
-    void BankSystem(vector<sClient> &vClients)
+    void ManageUsersScreen(vector<sUser> &vUsers)
     {
         short Choice;
         do
         {
             system("cls");
-            MainMenu();
-            Choice = ReadNumber(1, 7);
+            UserMenu();
+            Choice = ReadNumber(1, 6);
             system("cls");
             switch (Choice)
             {
             case 1:
-                PrintAllClientsData();
+                ShowAllUsersData(vUsers);
                 break;
             case 2:
-                AddClientsToFile(vClients);
+                AddUsersToFile(vUsers);
                 break;
             case 3:
-                UpdateAccount(vClients);
+                UpdateUser(vUsers);
                 break;
             case 4:
-                DeleteAccount(vClients);
+                DeleteUser(vUsers);
                 break;
             case 5:
-                FindAccount(vClients);
+                FindUser(vUsers);
                 break;
             case 6:
-                TransactionScreen(vClients);
+                break;
+            }
+            if (Choice != 6)
+            {
+                cout << "\n\n Press any key to go back to the Users Menu...";
+                system("pause>0");
+            }
+        } while (Choice != 6);
+    }
+
+    enum ePermissions
+    {
+        eAll = -1,
+        eShowAllClient = 1,
+        eAddNewClient = 2,
+        eUpdateClient = 4,
+        eDeleteClient = 8,
+        eFindClient = 16,
+        eTransaction = 32,
+        eManageUsers = 64
+    };
+    bool CheckUserPermission(ePermissions Permission)
+    {
+        if (Current.Permissions == ePermissions ::eAll)
+            return true;
+
+        if ((Current.Permissions & Permission) == Permission)
+            return true;
+
+        return false;
+    }
+
+    void BankSystem()
+    {
+        vector<sClient> vClients;
+        vector<sUser> vUsers;
+        vClients = LoadClientsDataFromFile(ClientsFile);
+        vUsers = LoadUsersDataFromFile(UsersFile);
+        short Choice;
+        do
+        {
+            system("cls");
+            MainMenu();
+            Choice = ReadNumber(1, 8);
+            system("cls");
+            switch (Choice)
+            {
+            case 1:
+                if (CheckUserPermission(eShowAllClient))
+                    ShowAllClientsData(vClients);
+                else
+                    PrintHeader("ACCESS DENIED !");
+                break;
+            case 2:
+                if (CheckUserPermission(eAddNewClient))
+                    AddClientsToFile(vClients);
+                else
+                    PrintHeader("ACCESS DENIED !");
+                break;
+            case 3:
+                if (CheckUserPermission(eUpdateClient))
+                    UpdateClient(vClients);
+                else
+                    PrintHeader("ACCESS DENIED !");
+                break;
+            case 4:
+                if (CheckUserPermission(eDeleteClient))
+                    DeleteClient(vClients);
+                else
+                    PrintHeader("ACCESS DENIED !");
+                break;
+            case 5:
+                if (CheckUserPermission(eFindClient))
+                    FindAccount(vClients);
+                else
+                    PrintHeader("ACCESS DENIED !");
+                break;
+            case 6:
+                if (CheckUserPermission(eTransaction))
+                    TransactionScreen(vClients);
+                else
+                {
+                    PrintHeader("ACCESS DENIED !");
+                    cout << "\n\n Press any key to go back to the Main Menu...";
+                    system("pause>0");
+                }
                 break;
             case 7:
-                PrintHeader("SYSTEM TERMINATED");
-                cout << " Thank you for using our banking service. Goodbye!\n\n";
+                if (CheckUserPermission(eManageUsers))
+                    ManageUsersScreen(vUsers);
+                else
+                {
+                    PrintHeader("ACCESS DENIED !");
+                    cout << "\n\n Press any key to go back to the Main Menu...";
+                    system("pause>0");
+                }
                 break;
+            case 8:
+                return;
             }
             if (Choice < 6)
             {
                 cout << "\n\n Press any key to go back to the Main Menu...";
                 system("pause>0");
             }
-        } while (Choice != 7);
+        } while (Choice != 8);
+    }
+    void LogIn()
+    {
+        do
+        {
+            vector<sUser> vUsers;
+            vUsers = LoadUsersDataFromFile(UsersFile);
+            sUser User;
+            string Name = "";
+            string Password = "";
+
+            system("cls");
+            PrintHeader("LOGIN SCREEN");
+
+            cout << " Enter UserName : ";
+            getline(cin >> ws, Name);
+
+            if (FindUserByUserName(Name, vUsers, User))
+            {
+                cout << " Enter Password : ";
+                getline(cin, Password);
+
+                if (HashPassword(Password) == User.Password)
+                {
+                    Current = User;
+                    BankSystem();
+                }
+                else
+                {
+                    cout << "\n[!] Invalid Password! Press any key to try again...";
+                    system("pause>0");
+                }
+            }
+            else
+            {
+                cout << "\n[!] User not found! Press any key to try again...";
+                system("pause>0");
+            }
+        } while (true);
     }
 }
