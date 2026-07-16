@@ -23,7 +23,16 @@ namespace bnk
         double Balance;
         bool MarkedForDelete = false;
     };
+    
+    struct sUser
+    {
+        string Name;
+        string Password;
+        int Permissions = 0;
+        bool MarkedForDelete = false;
+    };
 
+    inline sUser CurrentUser;
     int ReadNumber(int Min = -1, int Max = 100000000)
     {
         int Number;
@@ -67,15 +76,6 @@ namespace bnk
         return vString;
     }
 
-    struct sUser
-    {
-        string Name;
-        string Password;
-        int Permissions = 0;
-        bool MarkedForDelete = false;
-    };
-
-    sUser Current;
 
     bool CheckIfUserExists(const vector<sUser> &vUsers, string Name)
     {
@@ -206,7 +206,14 @@ namespace bnk
         {
             U.Name = vec[0];
             U.Password = (vec[1]);
-            U.Permissions = stoi(vec[2]);
+            try
+            {
+                U.Permissions = stoi(vec[2]);
+            }
+            catch (...)
+            {
+                U.Permissions = 0;
+            }
         }
         return U;
     }
@@ -406,9 +413,9 @@ namespace bnk
         SaveUsersDataToFile(UsersFile, vUsers);
         vUsers = LoadUsersDataFromFile(UsersFile);
         cout << "\n[-] User with UserName (" << Name << ") has been successfully deleted.\n";
-        if (Name == Current.Name)
+        if (Name == CurrentUser.Name)
         {
-            Current.Permissions = 0;
+            CurrentUser.Permissions = 0;
         }
     }
 
@@ -514,7 +521,14 @@ namespace bnk
             C.PinCode = vec[1];
             C.Name = vec[2];
             C.Phone = vec[3];
-            C.Balance = stod(vec[4]);
+            try
+            {
+                C.Balance = stod(vec[4]);
+            }
+            catch (...)
+            {
+                C.Balance = 0.0;
+            }
         }
         return C;
     }
@@ -993,10 +1007,10 @@ namespace bnk
     };
     bool CheckUserPermission(ePermissions Permission)
     {
-        if (Current.Permissions == ePermissions ::eAll)
+        if (CurrentUser.Permissions == ePermissions ::eAll)
             return true;
 
-        if ((Current.Permissions & Permission) == Permission)
+        if ((CurrentUser.Permissions & Permission) == Permission)
             return true;
 
         return false;
@@ -1100,7 +1114,7 @@ namespace bnk
 
                 if (HashPassword(Password) == User.Password)
                 {
-                    Current = User;
+                    CurrentUser = User;
                     BankSystem();
                 }
                 else
